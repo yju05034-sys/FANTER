@@ -23,11 +23,22 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace 2>&1
+        run: |
+          ./gradlew assembleDebug --info 2>&1 | tee build_output.txt || true
+          echo "=== ERRORS ==="
+          grep -i "error\|exception\|failed" build_output.txt | head -40 || true
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No APK found"
 
-      - name: Upload APK artifact
+      - name: Upload build log
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
+        with:
+          name: build-log
+          path: build_output.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: FANTER-APK
           path: app/build/outputs/apk/debug/app-debug.apk
@@ -38,7 +49,7 @@ jobs:
         with:
           tag_name: v1.0
           name: "FANTER Keyboard v1.0"
-          body: "کیبورد FANTER برای کلش اف کلنز - ارسال خودکار متن"
+          body: "کیبورد FANTER برای کلش اف کلنز"
           files: app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
