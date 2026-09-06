@@ -25,22 +25,36 @@ jobs:
           gradle-version: '8.4'
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace 2>&1 | tail -50
+        run: gradle assembleDebug
 
-      - name: Upload APK
+      - name: Rename APK
+        run: |
+          mkdir -p output
+          cp app/build/outputs/apk/debug/app-debug.apk output/FANTER-Keyboard.apk
+
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: FANTER-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: FANTER-Keyboard
+          path: output/FANTER-Keyboard.apk
+          retention-days: 30
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: success()
         with:
-          tag_name: v1.0
-          name: "FANTER Keyboard v1.0"
-          body: "کیبورد FANTER برای کلش اف کلنز - ارسال خودکار متن"
-          files: app/build/outputs/apk/debug/app-debug.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: "FANTER Keyboard - دانلود APK"
+          body: |
+            ## کیبورد FANTER برای کلش اف کلنز
+            
+            **نصب:**
+            فایل `FANTER-Keyboard.apk` را دانلود کنید و نصب کنید.
+            
+            **ویژگی‌ها:**
+            - ارسال خودکار متن در چت کلش
+            - دکمه شناور روشن/خاموش
+            - دکمه تعویض کیبورد
+            - دکمه مخفی‌سازی
+          files: output/FANTER-Keyboard.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
