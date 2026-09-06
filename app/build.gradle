@@ -1,11 +1,9 @@
 plugins {
     id 'com.android.application'
 }
-
 android {
     namespace 'com.fanter.keyboard'
     compileSdk 34
-
     defaultConfig {
         applicationId "com.fanter.keyboard"
         minSdk 26
@@ -13,21 +11,16 @@ android {
         versionCode 1
         versionName "1.0"
     }
-
     buildTypes {
-        release {
-            minifyEnabled false
-            signingConfig signingConfigs.debug
-        }
-        debug {
-            minifyEnabled false
-        }
+        debug { minifyEnabled false }
+        release { minifyEnabled false }
     }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    lint {
+        abortOnError false
+    }
 }
-
 dependencies {}
