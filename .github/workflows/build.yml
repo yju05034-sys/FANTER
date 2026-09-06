@@ -25,36 +25,45 @@ jobs:
           gradle-version: '8.4'
 
       - name: Build Debug APK
-        run: gradle assembleDebug
-
-      - name: Rename APK
+        id: build
         run: |
-          mkdir -p output
-          cp app/build/outputs/apk/debug/app-debug.apk output/FANTER-Keyboard.apk
+          gradle assembleDebug --stacktrace 2>&1 | tee build.log
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
-      - name: Upload APK as Artifact
+      - name: Show errors if failed
+        if: failure()
+        run: |
+          echo "=== BUILD ERRORS ==="
+          grep -n "error:\|Error\|Exception\|FAILED\|cannot find" build.log | head -50
+          echo "=== LAST 30 LINES ==="
+          tail -30 build.log
+
+      - name: Upload log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FANTER-Keyboard
-          path: output/FANTER-Keyboard.apk
+          name: build-log
+          path: build.log
+
+      - name: Rename and upload APK
+        if: success()
+        run: mkdir -p out && cp app/build/outputs/apk/debug/app-debug.apk out/FANTER-Keyboard.apk
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FANTER-Keyboard-APK
+          path: out/FANTER-Keyboard.apk
           retention-days: 30
 
-      - name: Create GitHub Release
+      - name: Create Release
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
+          tag_name: v1.${{ github.run_number }}
           name: "FANTER Keyboard - دانلود APK"
-          body: |
-            ## کیبورد FANTER برای کلش اف کلنز
-            
-            **نصب:**
-            فایل `FANTER-Keyboard.apk` را دانلود کنید و نصب کنید.
-            
-            **ویژگی‌ها:**
-            - ارسال خودکار متن در چت کلش
-            - دکمه شناور روشن/خاموش
-            - دکمه تعویض کیبورد
-            - دکمه مخفی‌سازی
-          files: output/FANTER-Keyboard.apk
+          body: "کیبورد FANTER برای کلش اف کلنز"
+          files: out/FANTER-Keyboard.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
