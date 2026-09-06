@@ -25,32 +25,16 @@ jobs:
           gradle-version: '8.4'
 
       - name: Build Debug APK
-        id: build
+        run: gradle assembleDebug
+
+      - name: Find and upload APK
         run: |
-          gradle assembleDebug --stacktrace 2>&1 | tee build.log
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
-
-      - name: Show errors if failed
-        if: failure()
-        run: |
-          echo "=== BUILD ERRORS ==="
-          grep -n "error:\|Error\|Exception\|FAILED\|cannot find" build.log | head -50
-          echo "=== LAST 30 LINES ==="
-          tail -30 build.log
-
-      - name: Upload log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
-
-      - name: Rename and upload APK
-        if: success()
-        run: mkdir -p out && cp app/build/outputs/apk/debug/app-debug.apk out/FANTER-Keyboard.apk
+          echo "=== APK files found ==="
+          find . -name "*.apk" 2>/dev/null
+          mkdir -p out
+          find . -name "*.apk" -exec cp {} out/FANTER-Keyboard.apk \;
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: FANTER-Keyboard-APK
@@ -58,12 +42,13 @@ jobs:
           retention-days: 30
 
       - name: Create Release
-        if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.${{ github.run_number }}
           name: "FANTER Keyboard - دانلود APK"
-          body: "کیبورد FANTER برای کلش اف کلنز"
+          body: |
+            ## ⚔️ کیبورد FANTER برای کلش اف کلنز
+            فایل `FANTER-Keyboard.apk` را دانلود و نصب کنید.
           files: out/FANTER-Keyboard.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
