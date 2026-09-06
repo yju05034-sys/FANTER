@@ -32,15 +32,23 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Build APK (show full error)
-        run: |
-          gradle assembleDebug --stacktrace --info 2>&1 | grep -E "error:|Error|FAILED|Exception|warning:|cannot" | head -50
-          gradle assembleDebug 2>&1 || true
+      - name: Build APK
+        run: gradle assembleDebug 2>&1 || true
 
-      - name: Copy APK
+      - name: Find APK and prepare release
         run: |
-          mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/FANTER-Keyboard.apk
+          echo "=== searching for APK ==="
+          find . -name "*.apk" 2>/dev/null
+          APK=$(find . -name "*.apk" | head -1)
+          if [ -n "$APK" ]; then
+            mkdir -p release
+            cp "$APK" release/FANTER-Keyboard.apk
+            echo "✅ APK found: $APK"
+            ls -lh release/
+          else
+            echo "❌ No APK found"
+            exit 1
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -54,7 +62,7 @@ jobs:
         with:
           tag_name: v1.${{ github.run_number }}
           name: "⚔️ FANTER Keyboard APK"
-          body: "کیبورد FANTER برای کلش اف کلنز"
+          body: "کیبورد FANTER برای کلش اف کلنز - فایل را دانلود و نصب کنید"
           files: release/FANTER-Keyboard.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
