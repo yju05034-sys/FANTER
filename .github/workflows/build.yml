@@ -29,14 +29,16 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      - name: Build APK with full log
-        run: |
-          gradle assembleDebug --stacktrace 2>&1
-          echo "EXIT: $?"
+      - name: Build APK
+        run: gradle assembleDebug --stacktrace 2>&1 | tee build.log; echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
 
-      - name: List outputs
+      - name: Upload build log (always)
         if: always()
-        run: find . -name "*.apk" 2>/dev/null || echo "no apk"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-txt
+          path: build.log
+          retention-days: 1
 
       - name: Upload APK
         if: success()
@@ -44,8 +46,9 @@ jobs:
         with:
           name: FANTER-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
 
-      - name: Release
+      - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
